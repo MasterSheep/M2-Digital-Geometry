@@ -1630,4 +1630,5 @@ CMakeFiles/main.dir/main.cpp.o: \
  /usr/local/include/DGtal/geometry/curves/CIncrementalSegmentComputer.h \
  /usr/local/include/DGtal/geometry/curves/CSegmentFactory.h \
  /usr/local/include/DGtal/geometry/curves/CSegment.h \
- /usr/local/include/DGtal/geometry/curves/GreedySegmentation.ih
+ /usr/local/include/DGtal/geometry/curves/GreedySegmentation.ih \
+ /usr/include/c++/11/numeric /usr/include/c++/11/bits/stl_numeric.h

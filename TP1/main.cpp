@@ -13,10 +13,14 @@
 
 #include <iostream>
 #include <vector>
+#include <numeric>
+#include <cmath>
 
 using namespace std;
 using namespace DGtal;
 using namespace Z2i;
+
+#define M_PI 3.14159265358979323846
 
 template<class T>
 Curve getBoundary(T & object)
@@ -53,7 +57,7 @@ int main(int argc, char** argv)
     //typedef Object<DT8_4, DigitalSet> ObjectType; // Digital object type
     typedef Object<DT4_8, DigitalSet> ObjectType; // Digital object type
 
-    Board2D aBoard, aBoard2, aBoard3; // we will use these objects to save output
+    Board2D aBoard, aBoard2, aBoard3, aBoard3Line; // we will use these objects to save output
     Image image = PGMReader<Image>::importPGM (argv[1]); // you have to provide a correct path as a parameter
     
     // 1) Create a digital set of proper size
@@ -86,7 +90,6 @@ int main(int argc, char** argv)
                                 }), objects.end());
     std::cout << "Number of components : " << objects.size() << " without border grains. \n"; // Right now size of "objects" is the number of conected components
 
-    std::cout << objects[0].size() << endl;
     // 5 (Step 3) boundary
     Curve bondary = getBoundary(objects[0]);
     aBoard2 << bondary; 
@@ -98,23 +101,70 @@ int main(int argc, char** argv)
     typedef GreedySegmentation<SegmentComputer> Segmentation;
 
     Range range = bondary.getPointsRange(); // Construction of the computer
-    SegmentComputer recognitionAlgorithm; // Segmentation
+    // Segmentation
+    SegmentComputer recognitionAlgorithm;
     Segmentation theSegmentation(range.begin(), range.end(), recognitionAlgorithm);
-     
-    string styleName = "";
+
     for ( Segmentation::SegmentComputerIterator it = theSegmentation.begin(), itEnd = theSegmentation.end(); it != itEnd; ++it ) 
-    {   
-        std::cout << it->back()[0] << " - " << it->back()[1] << endl;
-      aBoard3 << SetMode( "ArithmeticalDSS", "Points" ) << it->primitive(); // Cube line (optional)
-      aBoard3 << SetMode( "ArithmeticalDSS", "BoundingBox" ) // Blue rectangle
-              << CustomStyle( "ArithmeticalDSS/BoundingBox", new CustomPenColor( Color::Blue ) )
-              << it->primitive();
+    {     
+        // For ..
+        aBoard3 << SetMode( "ArithmeticalDSS", "Points" ) << it->primitive(); // Cube line (optional)
+        aBoard3 << SetMode( "ArithmeticalDSS", "BoundingBox" ) // Blue rectangle
+                << CustomStyle( "ArithmeticalDSS/BoundingBox", new CustomPenColor( Color::Blue ) )
+                << it->primitive();
+
+        // For draw outEPS_Step4-2 image, with line
+        aBoard3Line.drawLine(it->back()[0], it->back()[1], it->front()[0], it->front()[1]);
     } 
+
+    float v1_x, v1_y, v2_x, v2_y, area = 0., perimeter = 0.;
+    vector<float> sum_area_1, sum_area_2, sum_perimeter_1, sum_perimeter_2, sum_circularity_1, sum_circularity_2;
+    // 7 (Step 4.2-5)
+    for(auto o : objects) 
+    { 
+        Curve b = getBoundary(o); 
+        Range r = b.getPointsRange();
+        SegmentComputer recognitionAlgorithm;
+        Segmentation theSegmentation(r.begin(), r.end(), recognitionAlgorithm);
+        auto it0 = theSegmentation.begin();
+        area = 0.;
+        perimeter = sqrt(pow(it0->front()[0] - it0->back()[0] , 2) + pow(it0->front()[1] - it0->back()[1], 2));
+
+        for ( Segmentation::SegmentComputerIterator it = ++it0, itEnd = theSegmentation.end(); it != itEnd; ++it ) 
+        {     
+            v1_x = it->back()[0]  - it0->back()[0];
+            v1_y = it->back()[1]  - it0->back()[1];
+            v2_x = it->front()[0] - it0->back()[0];
+            v2_y = it->front()[1] - it0->back()[1];
+            area += (v1_x * v2_y - v2_x * v1_y);
+            perimeter += sqrt(pow(it->front()[0] - it->back()[0] , 2) + pow(it->front()[1] - it->back()[1], 2));
+        } 
+        area /= 2.;
+        sum_area_1.emplace_back(o.size());
+        sum_area_2.emplace_back(area);
+        sum_perimeter_1.emplace_back(b.size());
+        sum_perimeter_2.emplace_back(perimeter);
+        sum_circularity_1.emplace_back((4. * M_PI * area) / (perimeter * perimeter));
+        sum_circularity_2.emplace_back((4. * M_PI * o.size()) / (b.size() * b.size()));
+    }
+
+    std::cout << "--------------------------------------------\nAverage of the area of all grains of rice: \n";
+    std::cout << " - with number of grid points : " << accumulate(sum_area_1.begin(), sum_area_1.end(), 0.0) / sum_area_1.size() << endl;
+    std::cout << " - with area of the polygon : " << accumulate(sum_area_2.begin(), sum_area_2.end(), 0.0) / sum_area_2.size() << endl;
+    std::cout << "--------------------------------------------\n";
+    std::cout << "Average of the perimeter of all grains of rice: \n";
+    std::cout << " - with the boundary  : " << accumulate(sum_perimeter_1.begin(), sum_perimeter_1.end(), 0.0) / sum_perimeter_1.size() << endl;
+    std::cout << " - with the perimeter of the polygon  : " << accumulate(sum_perimeter_2.begin(), sum_perimeter_2.end(), 0.0) / sum_perimeter_2.size() << endl;
+    std::cout << "--------------------------------------------\n";
+    std::cout << "Average of the circularity of all grains of rice: \n";
+    std::cout << " - with the cells  : " << accumulate(sum_circularity_1.begin(), sum_circularity_1.end(), 0.0) / sum_circularity_1.size() << endl;
+    std::cout << " - with the polygon  : " << accumulate(sum_circularity_2.begin(), sum_circularity_2.end(), 0.0) / sum_circularity_2.size() << endl;
 
     // Save files
     sendToBoard(aBoard, objects[0], Color::Red); // Use this function to save digital objects to a file
     aBoard.saveEPS("outEPS_Step2.eps"); 
     aBoard2.saveEPS("outEPS_Step3.eps");
     aBoard3.saveEPS("outEPS_Step4.eps");
+    aBoard3Line.saveEPS("outEPS_Step4-2.eps");
     return 0;
 }

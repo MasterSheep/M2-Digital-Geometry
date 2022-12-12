@@ -1751,8 +1751,12 @@ CMakeFiles/main.dir/main.cpp.o: ../main.cpp \
   /usr/local/include/DGtal/geometry/curves/CIncrementalSegmentComputer.h \
   /usr/local/include/DGtal/geometry/curves/CSegmentFactory.h \
   /usr/local/include/DGtal/geometry/curves/CSegment.h \
-  /usr/local/include/DGtal/geometry/curves/GreedySegmentation.ih
+  /usr/local/include/DGtal/geometry/curves/GreedySegmentation.ih \
+  /usr/include/c++/11/numeric \
+  /usr/include/c++/11/bits/stl_numeric.h
 
+
+/usr/include/c++/11/numeric:
 
 /usr/local/include/DGtal/geometry/curves/GreedySegmentation.ih:
 
@@ -3859,6 +3863,8 @@ CMakeFiles/main.dir/main.cpp.o: ../main.cpp \
 /usr/include/boost/smart_ptr/detail/spinlock.hpp:
 
 /usr/include/x86_64-linux-gnu/bits/byteswap.h:
+
+/usr/include/c++/11/bits/stl_numeric.h:
 
 /usr/local/include/DGtal/kernel/CUnsignedNumber.h:
 
